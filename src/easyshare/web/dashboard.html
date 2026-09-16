@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EasyShare Peer</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #ffffff; --text: #1d2330; --muted: #6b7280; --line: #e3e6eb;
+    --accent: #2563eb; --accent-soft: #dbe7ff; --ok: #15803d; --ok-soft: #dcfce7;
+    --warn: #b45309; --warn-soft: #fef3c7; --bad: #b91c1c; --bad-soft: #fee2e2;
+    --piece-have: #2563eb; --piece-missing: #d7dce3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1218; --card: #181c24; --text: #e6e8ec; --muted: #9aa3b2; --line: #2a303b;
+      --accent: #6b9bff; --accent-soft: #1d2a44; --ok: #4ade80; --ok-soft: #13301f;
+      --warn: #fbbf24; --warn-soft: #3a2c0c; --bad: #f87171; --bad-soft: #3b1515;
+      --piece-have: #6b9bff; --piece-missing: #2c333f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+  header { background: var(--card); border-bottom: 1px solid var(--line); padding: 14px 24px; display: flex; flex-wrap: wrap; gap: 12px 28px; align-items: center; }
+  header h1 { font-size: 18px; margin: 0; }
+  header h1 span { color: var(--accent); }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 18px; color: var(--muted); font-size: 13px; }
+  .meta b { color: var(--text); font-weight: 600; }
+  main { max-width: 1180px; margin: 0 auto; padding: 20px 24px 40px; display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
+  section { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; min-width: 0; }
+  section.wide { grid-column: 1 / -1; }
+  h2 { font-size: 15px; margin: 0 0 12px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 12px; color: var(--muted); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  td { padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .hash { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--muted); }
+  button { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 5px 12px; border-radius: 6px; cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .5; cursor: default; }
+  input { font: inherit; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); min-width: 0; flex: 1; }
+  .row { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .pill { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); }
+  .pill.warn { background: var(--warn-soft); color: var(--warn); }
+  .pill.bad { background: var(--bad-soft); color: var(--bad); }
+  .pieces { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 6px; max-width: 520px; }
+  .pieces i { width: 9px; height: 9px; border-radius: 2px; background: var(--piece-missing); }
+  .pieces i.h { background: var(--piece-have); }
+  .progress { height: 10px; background: var(--piece-missing); border-radius: 99px; overflow: hidden; margin: 8px 0; }
+  .progress div { height: 100%; background: var(--accent); transition: width .4s; }
+  .download { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+  .download:last-child { margin-bottom: 0; }
+  .stats { display: flex; flex-wrap: wrap; gap: 4px 18px; color: var(--muted); font-size: 13px; }
+  .stats b { color: var(--text); }
+  .peerbar { display: grid; grid-template-columns: minmax(120px, 260px) 1fr 70px; gap: 8px; align-items: center; font-size: 13px; margin-top: 4px; }
+  .peerbar .progress { margin: 0; height: 8px; }
+  .events { margin: 8px 0 0; padding: 8px 10px; background: var(--bg); border-radius: 6px; font-family: ui-monospace, Consolas, monospace; font-size: 12px; max-height: 120px; overflow: auto; color: var(--muted); }
+  .empty { color: var(--muted); padding: 6px 0; }
+  .msg { font-size: 13px; margin-top: 6px; }
+  .msg.bad { color: var(--bad); }
+  .msg.ok { color: var(--ok); }
+  .scroll { overflow-x: auto; }
+  @media (max-width: 860px) { main { grid-template-columns: 1fr; padding: 16px; } header { padding: 12px 16px; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Easy<span>Share</span> &middot; <span id="peerName">Peer</span></h1>
+  <div class="meta" id="headerMeta"></div>
+</header>
+
+<main>
+  <section class="wide">
+    <h2>My files <span><button id="refreshBtn">Rescan shared folder</button></span></h2>
+    <div class="scroll"><table>
+      <thead><tr><th>Name</th><th>Size</th><th>Pieces</th><th>Status</th><th></th></tr></thead>
+      <tbody id="files"></tbody>
+    </table></div>
+    <div class="msg" id="filesMsg"></div>
+  </section>
+
+  <section class="wide">
+    <h2>Downloads</h2>
+    <div id="downloads"><div class="empty">No downloads yet. Search the network below and click Download.</div></div>
+  </section>
+
+  <section>
+    <h2>Find files</h2>
+    <div class="row">
+      <input id="searchBox" placeholder="Keyword (leave empty to list everything)">
+      <button class="primary" id="searchBtn">Search</button>
+    </div>
+    <div class="row">
+      <input id="connectBox" placeholder="Connect to peer directly, e.g. 192.168.1.10:6001">
+      <button id="connectBtn">Connect</button>
+    </div>
+    <div class="msg" id="searchMsg"></div>
+    <div class="scroll"><table>
+      <thead><tr><th>Name</th><th>Size</th><th>Peers</th><th></th></tr></thead>
+      <tbody id="results"><tr><td colspan="4" class="empty">Run a search to see files shared by other peers.</td></tr></tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Peers <span><button id="discoverBtn">LAN discover</button> <button id="peersBtn">Reload</button></span></h2>
+    <div class="msg" id="peersMsg"></div>
+    <table>
+      <thead><tr><th>Peer</th><th>Address</th><th>Files</th></tr></thead>
+      <tbody id="peers"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtBytes = b => { if (b < 1024) return b + ' B'; const u = ['KB','MB','GB','TB']; let i = -1; do { b /= 1024; i++; } while (b >= 1024 && i < 3); return b.toFixed(1) + ' ' + u[i]; };
+async function api(path) { const r = await fetch(path, { method: 'POST' }); return r.json(); }
+
+const speeds = {};
+let pointerDown = false;
+document.addEventListener('mousedown', () => { pointerDown = true; });
+document.addEventListener('mouseup', () => { setTimeout(() => { pointerDown = false; }, 50); });
+function setHtml(id, html) { const el = $(id); if (el.innerHTML !== html && el.dataset.last !== html) { el.innerHTML = html; el.dataset.last = html; } }
+
+function pieceGrid(map) {
+  return '<div class="pieces" title="Each square is one piece (chunk). Blue = have.">' +
+    [...map].map(c => c === '1' ? '<i class="h"></i>' : '<i></i>').join('') + '</div>';
+}
+
+function renderStatus(s) {
+  $('peerName').textContent = s.name;
+  document.title = 'EasyShare - ' + s.name;
+  const tracker = s.tracker === 'none' ? '<span class="pill warn">no tracker</span>'
+    : s.trackerOnline ? '<span class="pill ok">tracker ' + esc(s.tracker) + '</span>' : '<span class="pill bad">tracker offline</span>';
+  setHtml('headerMeta',
+    '<span>Port <b>' + s.port + '</b></span>' + tracker +
+    (s.lan ? '<span class="pill">LAN discovery on</span>' : '') +
+    '<span>Uploaded <b>' + fmtBytes(s.uploaded) + '</b></span>' +
+    '<span>Downloaded <b>' + fmtBytes(s.downloaded) + '</b></span>' +
+    '<span>Piece size <b>' + s.pieceKb + ' KB</b></span>' +
+    (s.limitKbps ? '<span>Upload limit <b>' + s.limitKbps + ' KB/s</b></span>' : '') +
+    (s.corrupt ? '<span class="pill bad">simulating ' + s.corrupt + '% corrupt uploads</span>' : ''));
+
+  setHtml('files', s.files.length ? s.files.map(f =>
+    '<tr><td><b>' + esc(f.name) + '</b><div class="hash">' + esc(f.infoHash) + '</div>' + pieceGrid(f.pieceMap) + '</td>' +
+    '<td>' + esc(f.sizeText) + '</td>' +
+    '<td>' + f.have + '/' + f.pieces + '<div class="hash">' + esc(f.pieceSizeText) + ' each</div></td>' +
+    '<td>' + (f.complete ? '<span class="pill ok">seeding</span>' : '<span class="pill warn">' + f.percent + '% partial</span>') + '</td>' +
+    '<td><button data-verify="' + f.infoHash + '">Verify SHA-1</button></td></tr>').join('')
+    : '<tr><td colspan="5" class="empty">No shared files. Copy files into ' + esc(s.sharedDir) + ' and click Rescan.</td></tr>');
+
+  const dl = s.downloads.slice().reverse();
+  setHtml('downloads', dl.length ? dl.map(d => {
+    const prev = speeds[d.infoHash];
+    const now = Date.now();
+    let speed = prev ? prev.speed : 0;
+    if (prev && now - prev.t >= 900) { speed = (d.bytes - prev.bytes) * 1000 / (now - prev.t); speeds[d.infoHash] = { t: now, bytes: d.bytes, speed }; }
+    if (!prev) speeds[d.infoHash] = { t: now, bytes: d.bytes, speed: 0 };
+    const pill = { RUNNING: '<span class="pill">downloading</span>', COMPLETED: '<span class="pill ok">completed &middot; SHA-1 verified</span>',
+      PAUSED: '<span class="pill warn">paused</span>', FAILED: '<span class="pill bad">failed</span>' }[d.state];
+    const total = Object.values(d.perPeer).reduce((a, b) => a + b, 0) || 1;
+    const perPeer = Object.entries(d.perPeer).map(([peer, n]) =>
+      '<div class="peerbar"><span>' + esc(peer) + '</span><div class="progress"><div style="width:' + (n * 100 / total) + '%"></div></div><span>' + n + ' pieces</span></div>').join('');
+    const action = d.state === 'RUNNING' ? '<button data-pause="' + d.infoHash + '">Pause</button>'
+      : d.state === 'PAUSED' ? '<button class="primary" data-resume="' + d.infoHash + '">Resume</button>' : '';
+    return '<div class="download"><h2><span>' + esc(d.name) + ' &nbsp;' + pill + '</span><span>' + action + '</span></h2>' +
+      '<div class="progress"><div style="width:' + d.percent + '%"></div></div>' +
+      '<div class="stats"><span><b>' + d.percent + '%</b></span><span>Pieces <b>' + d.done + '/' + d.pieces + '</b></span>' +
+      '<span>Size <b>' + esc(d.sizeText) + '</b></span>' +
+      (d.state === 'RUNNING' ? '<span>Speed <b>' + fmtBytes(Math.max(0, speed)) + '/s</b></span><span>Connected peers <b>' + d.peers + '</b></span>' : '') +
+      '<span>Corrupted pieces rejected <b>' + d.badPieces + '</b></span>' +
+      (d.resumedPieces ? '<span>Resumed with <b>' + d.resumedPieces + '</b> pieces</span>' : '') +
+      '<span>Time <b>' + (d.elapsedMs / 1000).toFixed(1) + ' s</b></span></div>' +
+      (perPeer ? '<div style="margin-top:8px"><div class="hash">Pieces received from each peer</div>' + perPeer + '</div>' : '') +
+      (d.result ? '<div class="msg ok">Saved to ' + esc(d.result) + '<br>Whole-file SHA-1 ' + esc(d.fileHash) + ' matches.</div>' : '') +
+      (d.state !== 'COMPLETED' && d.message ? '<div class="msg">' + esc(d.message) + '</div>' : '') +
+      (d.events.length ? '<div class="events">' + d.events.map(esc).join('<br>') + '</div>' : '') +
+      '</div>';
+  }).join('') : '<div class="empty">No downloads yet. Search the network below and click Download.</div>');
+}
+
+async function refreshStatus() {
+  if (pointerDown) return;
+  try { renderStatus(await (await fetch('/api/status')).json()); }
+  catch (e) { $('headerMeta').innerHTML = '<span class="pill bad">peer is not running</span>'; }
+}
+
+function renderResults(results) {
+  $('results').innerHTML = results.length ? results.map(r =>
+    '<tr><td><b>' + esc(r.name) + '</b><div class="hash">' + esc(r.infoHash.slice(0, 16)) + '&hellip;</div></td>' +
+    '<td>' + esc(r.sizeText) + '</td><td>' + r.peers + ' <span class="hash">(' + r.seeders + ' seed)</span></td>' +
+    '<td>' + (r.local ? '<span class="pill ok">you have it</span>' : '<button class="primary" data-download="' + r.infoHash + '">Download</button>') + '</td></tr>').join('')
+    : '<tr><td colspan="4" class="empty">No files found.</td></tr>';
+}
+
+async function search() {
+  $('searchMsg').textContent = 'Searching...'; $('searchMsg').className = 'msg';
+  const data = await api('/api/search?q=' + encodeURIComponent($('searchBox').value));
+  $('searchMsg').textContent = data.results.length + ' file(s) found.';
+  renderResults(data.results);
+}
+
+async function loadPeers() {
+  const data = await api('/api/peers');
+  $('peersMsg').textContent = data.error || '';
+  $('peersMsg').className = data.error ? 'msg bad' : 'msg';
+  const rows = data.tracker.map(p => '<tr><td>' + esc(p.name) + (p.you ? ' <span class="pill">you</span>' : '') + '</td><td class="hash">' + esc(p.address) + '</td><td>' + p.files + '</td></tr>');
+  data.known.forEach(a => rows.push('<tr><td>(direct)</td><td class="hash">' + esc(a) + '</td><td>-</td></tr>'));
+  $('peers').innerHTML = rows.length ? rows.join('') : '<tr><td colspan="3" class="empty">No peers known yet.</td></tr>';
+}
+
+document.addEventListener('click', async e => {
+  const t = e.target;
+  if (t.dataset.download || t.dataset.resume) {
+    t.disabled = true;
+    const data = await api('/api/download?hash=' + (t.dataset.download || t.dataset.resume));
+    if (!data.ok) { $('searchMsg').textContent = data.error; $('searchMsg').className = 'msg bad'; t.disabled = false; }
+    refreshStatus();
+  } else if (t.dataset.pause) {
+    await api('/api/pause?hash=' + t.dataset.pause); refreshStatus();
+  } else if (t.dataset.verify) {
+    t.disabled = true; t.textContent = 'Checking...';
+    const d = await api('/api/verify?hash=' + t.dataset.verify);
+    $('filesMsg').className = d.ok && d.piecesBad === 0 ? 'msg ok' : 'msg bad';
+    $('filesMsg').textContent = !d.ok ? d.error :
+      'Pieces OK: ' + d.piecesOk + ', corrupted: ' + d.piecesBad + ', missing: ' + d.piecesMissing +
+      (d.actual ? ' | whole-file SHA-1 ' + d.actual + (d.verified ? ' = VERIFIED' : ' does NOT match ' + d.expected) : '');
+    t.disabled = false; t.textContent = 'Verify SHA-1';
+  }
+});
+$('searchBtn').onclick = search;
+$('searchBox').onkeydown = e => { if (e.key === 'Enter') search(); };
+$('connectBtn').onclick = async () => {
+  const data = await api('/api/connect?addr=' + encodeURIComponent($('connectBox').value));
+  $('searchMsg').className = data.ok ? 'msg ok' : 'msg bad';
+  $('searchMsg').textContent = data.ok ? 'Connected to ' + data.peer + '. Its files:' : data.error;
+  if (data.ok) { renderResults(data.results); loadPeers(); }
+};
+$('discoverBtn').onclick = async () => {
+  $('peersMsg').textContent = 'Broadcasting on the LAN...'; $('peersMsg').className = 'msg';
+  const data = await api('/api/discover');
+  $('peersMsg').textContent = !data.ok ? data.error : data.found.length ? 'Found: ' + data.found.map(f => f.name + ' (' + f.address + ')').join(', ') : 'No peers answered on the LAN.';
+  loadPeers();
+};
+$('peersBtn').onclick = loadPeers;
+$('refreshBtn').onclick = async () => {
+  const d = await api('/api/refresh');
+  $('filesMsg').className = d.ok ? 'msg ok' : 'msg bad';
+  $('filesMsg').textContent = d.ok ? 'Shared folder rescanned: ' + d.count + ' file(s).' : d.error;
+  refreshStatus();
+};
+
+refreshStatus(); loadPeers();
+setInterval(refreshStatus, 1000);
+setInterval(loadPeers, 10000);
+</script>
+</body>
+</html>

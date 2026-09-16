@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EasyShare User Manual</title>
+<style>
+  :root { --bg: #f6f7f9; --card: #ffffff; --text: #18202c; --muted: #5d6675; --line: #e2e5ea; --accent: #2457d6; --code: #eef0f4; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e1116; --card: #161a21; --text: #e5e8ed; --muted: #9aa3b1; --line: #262c36; --accent: #7aa2ff; --code: #1d222b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.65 system-ui, "Segoe UI", Roboto, sans-serif; }
+  nav { border-bottom: 1px solid var(--line); background: var(--card); }
+  nav div { max-width: 900px; margin: 0 auto; padding: 12px 20px; display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  nav a { color: var(--accent); text-decoration: none; }
+  article { max-width: 900px; margin: 0 auto; padding-inline: 20px; padding-block: 24px 60px; }
+  h1 { font-size: 34px; line-height: 1.15; } h2 { margin-top: 44px; padding-top: 12px; border-top: 1px solid var(--line); } h3 { margin-top: 28px; }
+  a { color: var(--accent); }
+  code, pre { font-family: ui-monospace, Consolas, monospace; background: var(--code); border-radius: 6px; }
+  code { padding: 1px 5px; font-size: 14px; }
+  pre { padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.45; }
+  pre code { padding: 0; background: none; }
+  table { border-collapse: collapse; width: 100%; display: block; overflow-x: auto; }
+  th, td { border: 1px solid var(--line); padding: 7px 10px; text-align: left; vertical-align: top; font-size: 15px; }
+  th { background: var(--card); }
+  blockquote { margin: 16px 0; padding: 8px 16px; border-left: 4px solid var(--accent); background: var(--card); color: var(--muted); }
+  hr { border: 0; border-top: 1px solid var(--line); }
+  @media print { nav { display: none; } body { background: #fff; color: #000; } }
+</style>
+</head>
+<body>
+<nav><div><a href="index.html">&larr; EasyShare home</a><span><a href="USER_MANUAL.md">Markdown</a> &middot; <a href="downloads/EasyShare.zip">Download project</a></span></div></nav>
+<article id="manual">Loading the manual&hellip; If nothing appears, open <a href="USER_MANUAL.md">USER_MANUAL.md</a>.</article>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script>
+  fetch('USER_MANUAL.md').then(r => r.text()).then(md => {
+    const slug = t => t.toLowerCase().replace(/<[^>]+>/g, '').replace(/[^\w\s-]/g, '').trim().replace(/\s+/g, '-');
+    const renderer = new marked.Renderer();
+    renderer.heading = (text, level) => '<h' + level + ' id="' + slug(text) + '">' + text + '</h' + level + '>';
+    document.getElementById('manual').innerHTML = marked.parse(md, { renderer });
+    if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
+  });
+</script>
+</body>
+</html>
