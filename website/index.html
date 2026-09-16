@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EasyShare — Peer-to-Peer File Sharing in Java</title>
+<meta name="description" content="EasyShare: a BitTorrent-style peer-to-peer file sharing system in Java with file chunking, SHA-1 piece validation, multithreaded sockets and peer discovery.">
+<style>
+  :root {
+    --bg: #f6f7f9; --card: #ffffff; --text: #18202c; --muted: #5d6675; --line: #e2e5ea;
+    --accent: #2457d6; --accent-soft: #e3ebfd; --ok: #177a3c; --bad: #b42318; --code: #eef0f4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0e1116; --card: #161a21; --text: #e5e8ed; --muted: #9aa3b1; --line: #262c36;
+      --accent: #7aa2ff; --accent-soft: #1b2640; --ok: #4ade80; --bad: #f87171; --code: #1d222b; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, "Segoe UI", Roboto, sans-serif; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+  nav { border-bottom: 1px solid var(--line); background: var(--card); }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-block: 12px; flex-wrap: wrap; }
+  nav b { font-size: 18px; } nav b span { color: var(--accent); }
+  nav a { color: var(--muted); text-decoration: none; margin-left: 18px; font-size: 15px; }
+  nav a:hover { color: var(--accent); }
+  .hero { padding-block: 64px 40px; }
+  .hero h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.1; margin: 0 0 16px; letter-spacing: -0.02em; }
+  .hero p { font-size: 19px; color: var(--muted); max-width: 720px; margin: 0 0 28px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .tag { background: var(--accent-soft); color: var(--accent); border-radius: 99px; padding: 3px 12px; font-size: 14px; }
+  .btn { display: inline-block; padding: 11px 20px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 0 10px 10px 0; border: 1px solid var(--line); color: var(--text); background: var(--card); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .note { font-size: 14px; color: var(--muted); }
+  section { padding-block: 36px; }
+  h2 { font-size: 28px; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .lead { color: var(--muted); margin: 0 0 24px; max-width: 760px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  .card h3 { margin: 0 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .diagram { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; }
+  .diagram svg { display: block; min-width: 640px; width: 100%; height: auto; }
+  svg .box { fill: var(--card); stroke: var(--line); stroke-width: 2; }
+  svg .tracker { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 2; }
+  svg text { fill: var(--text); font: 15px system-ui, sans-serif; }
+  svg .small { fill: var(--muted); font-size: 12.5px; }
+  svg .dash { stroke: var(--muted); stroke-width: 1.5; stroke-dasharray: 5 5; fill: none; }
+  svg .flow { stroke: var(--accent); stroke-width: 3; fill: none; }
+  svg .piece { fill: var(--accent); }
+  svg .piece.m { fill: var(--line); }
+  svg .piece.bad { fill: var(--bad); }
+  ol.steps { padding-left: 22px; margin: 0; }
+  ol.steps li { margin-bottom: 10px; }
+  code, pre { font-family: ui-monospace, Consolas, monospace; background: var(--code); border-radius: 6px; }
+  code { padding: 1px 6px; font-size: 14px; }
+  pre { padding: 14px 16px; overflow-x: auto; font-size: 13.5px; line-height: 1.5; margin: 0; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); font-size: 15px; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 14px; }
+  tr:last-child td { border-bottom: 0; }
+  .table-scroll { overflow-x: auto; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  footer { border-top: 1px solid var(--line); padding-block: 24px; color: var(--muted); font-size: 14px; margin-top: 30px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } nav a { margin-left: 12px; } .hero { padding-block: 40px 24px; } }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <b>Easy<span>Share</span></b>
+    <div><a href="#how">How it works</a><a href="#start">Quick start</a><a href="#demo">Demo</a><a href="manual.html">User manual</a></div>
+  </div>
+</nav>
+
+<header class="hero wrap">
+  <div class="tags"><span class="tag">Java 17+</span><span class="tag">TCP sockets</span><span class="tag">Multithreading</span><span class="tag">SHA-1</span><span class="tag">BitTorrent-style</span></div>
+  <h1>Peer-to-peer file sharing,<br>piece by verified piece.</h1>
+  <p>EasyShare splits files into chunks, exchanges the chunks directly between connected peers and validates every piece with a SHA-1 hash. No central file server: every downloader becomes an uploader.</p>
+  <a class="btn primary" href="downloads/EasyShare.zip">Download project (.zip)</a>
+  <a class="btn" href="manual.html">Read the user manual</a>
+  <p class="note">The peer-to-peer network runs on your own computers (Windows, JDK 17+). This website is the project's documentation and download page.</p>
+</header>
+
+<section id="how" class="wrap">
+  <h2>How it works</h2>
+  <p class="lead">A tracker only answers "who has this file?". Pieces flow directly between peers, several at once, and each piece is checked against its SHA-1 hash before it is written to disk.</p>
+  <div class="diagram">
+    <svg viewBox="0 0 900 380" role="img" aria-label="Tracker in the middle, Alice and Bob sending pieces directly to Carol">
+      <rect class="tracker" x="330" y="16" width="240" height="70" rx="10"/>
+      <text x="450" y="46" text-anchor="middle" font-weight="600">Tracker</text>
+      <text class="small" x="450" y="68" text-anchor="middle">info hash → list of peers (no file data)</text>
+
+      <path class="dash" d="M370 86 L150 200"/><path class="dash" d="M450 86 L450 200"/><path class="dash" d="M530 86 L750 200"/>
+      <text class="small" x="215" y="130">announce</text><text class="small" x="458" y="150">announce</text><text class="small" x="628" y="130">get peers</text>
+
+      <rect class="box" x="40" y="200" width="220" height="100" rx="10"/>
+      <text x="150" y="232" text-anchor="middle" font-weight="600">Alice · seeder</text>
+      <text class="small" x="150" y="254" text-anchor="middle">sample-video.bin · 48 pieces</text>
+      <g transform="translate(62 268)">
+        <rect class="piece" width="14" height="14" rx="2"/><rect class="piece" x="18" width="14" height="14" rx="2"/><rect class="piece" x="36" width="14" height="14" rx="2"/><rect class="piece" x="54" width="14" height="14" rx="2"/><rect class="piece" x="72" width="14" height="14" rx="2"/><rect class="piece" x="90" width="14" height="14" rx="2"/><rect class="piece" x="108" width="14" height="14" rx="2"/><rect class="piece" x="126" width="14" height="14" rx="2"/><rect class="piece" x="144" width="14" height="14" rx="2"/><rect class="piece" x="162" width="14" height="14" rx="2"/>
+      </g>
+
+      <rect class="box" x="340" y="200" width="220" height="100" rx="10"/>
+      <text x="450" y="232" text-anchor="middle" font-weight="600">Bob · seeder</text>
+      <text class="small" x="450" y="254" text-anchor="middle">same file, same info hash</text>
+      <g transform="translate(362 268)">
+        <rect class="piece" width="14" height="14" rx="2"/><rect class="piece" x="18" width="14" height="14" rx="2"/><rect class="piece" x="36" width="14" height="14" rx="2"/><rect class="piece" x="54" width="14" height="14" rx="2"/><rect class="piece" x="72" width="14" height="14" rx="2"/><rect class="piece" x="90" width="14" height="14" rx="2"/><rect class="piece" x="108" width="14" height="14" rx="2"/><rect class="piece" x="126" width="14" height="14" rx="2"/><rect class="piece" x="144" width="14" height="14" rx="2"/><rect class="piece" x="162" width="14" height="14" rx="2"/>
+      </g>
+
+      <rect class="box" x="640" y="200" width="220" height="100" rx="10"/>
+      <text x="750" y="232" text-anchor="middle" font-weight="600">Carol · downloading</text>
+      <text class="small" x="750" y="254" text-anchor="middle">pieces from 2 peers in parallel</text>
+      <g transform="translate(662 268)">
+        <rect class="piece" width="14" height="14" rx="2"/><rect class="piece" x="18" width="14" height="14" rx="2"/><rect class="piece m" x="36" width="14" height="14" rx="2"/><rect class="piece" x="54" width="14" height="14" rx="2"/><rect class="piece bad" x="72" width="14" height="14" rx="2"/><rect class="piece" x="90" width="14" height="14" rx="2"/><rect class="piece m" x="108" width="14" height="14" rx="2"/><rect class="piece" x="126" width="14" height="14" rx="2"/><rect class="piece m" x="144" width="14" height="14" rx="2"/><rect class="piece m" x="162" width="14" height="14" rx="2"/>
+      </g>
+
+      <path class="flow" d="M150 300 C 150 360, 700 370, 720 304"/>
+      <path class="flow" d="M450 300 C 450 340, 760 350, 770 304"/>
+      <text class="small" x="300" y="360">pieces 0, 3, 7 … over TCP</text>
+      <text class="small" x="520" y="330">pieces 1, 4, 5 …</text>
+      <rect class="piece bad" x="600" y="352" width="12" height="12" rx="2"/><text class="small" x="618" y="363">bad SHA-1 → re-download</text>
+    </svg>
+  </div>
+
+  <div class="grid" style="margin-top:18px">
+    <div class="card"><h3>1 · Chunk &amp; hash</h3><p>Each shared file is cut into 256 KB pieces. The SHA-1 of every piece and of the metadata (the <em>info hash</em>) is computed.</p></div>
+    <div class="card"><h3>2 · Discover peers</h3><p>Peers announce their files to a tracker every 15 s, or find each other on the LAN with UDP multicast, or connect by IP.</p></div>
+    <div class="card"><h3>3 · Download in parallel</h3><p>One thread per peer. A shared piece manager hands out the rarest missing piece, never the same piece twice.</p></div>
+    <div class="card"><h3>4 · Verify every piece</h3><p>Bad pieces are discarded and fetched again; peers sending 5 bad pieces are blocked. The whole file is verified at the end.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Features</h2>
+  <p class="lead">Everything is plain Java — sockets, threads, MessageDigest — with no external libraries.</p>
+  <div class="table-scroll"><table>
+    <tr><th>Concept</th><th>Implementation</th></tr>
+    <tr><td>File chunking</td><td>Fixed-size pieces written at their byte offset into a pre-allocated <code>.part</code> file</td></tr>
+    <tr><td>Cryptographic hashing</td><td>SHA-1 per piece, whole-file SHA-1, info hash = SHA-1 of the metadata</td></tr>
+    <tr><td>Multithreaded socket streams</td><td>Thread-pool upload server; coordinator + one worker thread per peer for downloads</td></tr>
+    <tr><td>Peer discovery</td><td>Tracker (TCP text protocol), LAN discovery (UDP multicast), manual <code>connect ip:port</code></td></tr>
+    <tr><td>Swarming</td><td>Rarest-first piece selection; partial downloads are shared immediately; completed files are seeded</td></tr>
+    <tr><td>Resume</td><td>Pieces on disk are re-verified after a restart; only missing pieces are downloaded</td></tr>
+    <tr><td>Interfaces</td><td>Console commands and a live web dashboard served by Java's built-in <code>HttpServer</code></td></tr>
+    <tr><td>Testing</td><td>Automated end-to-end self-test: 12 checks with a tracker and 7 peers</td></tr>
+  </table></div>
+</section>
+
+<section id="start" class="wrap">
+  <h2>Quick start</h2>
+  <p class="lead">Needs a JDK 17 or newer. Everything else is in the zip.</p>
+  <div class="two">
+    <div class="card">
+      <ol class="steps">
+        <li><a href="downloads/EasyShare.zip">Download</a> and extract the project.</li>
+        <li>Double-click <code>build.bat</code> to compile <code>EasyShare.jar</code>.</li>
+        <li>Double-click <code>demo.bat</code>. A tracker and three peers (Alice, Bob, Carol) open in separate windows.</li>
+        <li>In Carol's window type <code>search</code> then <code>get 3</code>, or use her dashboard at <code>http://localhost:8003</code>.</li>
+        <li>Allow Java through Windows Firewall if asked.</li>
+      </ol>
+    </div>
+    <pre>Carol&gt; get 3
+Downloading sample-video.bin (12.0 MB, 48 pieces)
+  ! Piece #31 from Bob failed SHA-1 check
+    -&gt; discarded, will download again
+  [##############################] 100%
+
+DOWNLOAD COMPLETE
+  Pieces received from each peer:
+    Alice (127.0.0.1:6001)   25 pieces
+    Bob (127.0.0.1:6002)     23 pieces
+  Corrupted pieces re-downloaded: 3
+  Integrity: VERIFIED</pre>
+  </div>
+</section>
+
+<section id="demo" class="wrap">
+  <h2>Demonstration scenarios</h2>
+  <p class="lead">Each one proves a concept from the project brief. Step-by-step instructions are in the <a href="manual.html">user manual</a>.</p>
+  <div class="grid">
+    <div class="card"><h3>Multi-source download</h3><p>Carol receives pieces from Alice and Bob at the same time — shown per peer in the summary and dashboard.</p></div>
+    <div class="card"><h3>Integrity checking</h3><p>Bob runs with <code>--corrupt 15</code>. Every damaged piece is caught by SHA-1 and never written to disk.</p></div>
+    <div class="card"><h3>Pause &amp; resume</h3><p>Press Enter, close the program, start it again and type <code>resume</code> — verified pieces are kept.</p></div>
+    <div class="card"><h3>Swarm</h3><p>A 4th peer, Dave, downloads pieces from Carol while Carol is still downloading.</p></div>
+    <div class="card"><h3>No tracker needed</h3><p>Close the tracker and use <code>discover</code> (UDP multicast) or <code>connect ip:port</code>.</p></div>
+    <div class="card"><h3>Tamper detection</h3><p>Edit a shared file and run <code>verify</code>: the changed piece is reported as corrupted.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Scripts</h2>
+  <div class="table-scroll"><table>
+    <tr><th>File</th><th>What it does</th></tr>
+    <tr><td><code>build.bat</code></td><td>Compiles the Java sources into <code>EasyShare.jar</code></td></tr>
+    <tr><td><code>demo.bat</code></td><td>Starts a tracker and three peers on one computer with sample files</td></tr>
+    <tr><td><code>demo-dave.bat</code></td><td>Adds a fourth peer to the running demo</td></tr>
+    <tr><td><code>start-tracker.bat</code></td><td>Starts a tracker for a real LAN setup</td></tr>
+    <tr><td><code>start-peer.bat</code></td><td>Starts a peer; asks for name, port and tracker address</td></tr>
+    <tr><td><code>run-tests.bat</code></td><td>Runs the automated end-to-end tests</td></tr>
+    <tr><td><code>clean-demo.bat</code></td><td>Deletes demo folders to start fresh</td></tr>
+  </table></div>
+</section>
+
+<footer>
+  <div class="wrap">EasyShare · Peer-to-Peer File Sharing System · Java · Project 07 (Distributed Systems)</div>
+</footer>
+</body>
+</html>

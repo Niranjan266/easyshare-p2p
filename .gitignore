@@ -1,0 +1,8 @@
+/out/
+/demo/
+/peers/
+/downloads/
+/shared/
+*.part
+*.p2pmeta
+.easyshare/

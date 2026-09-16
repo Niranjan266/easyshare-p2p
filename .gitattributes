@@ -1,0 +1,6 @@
+*.bat text eol=crlf
+*.java text
+*.md text
+*.html text
+*.jar binary
+*.zip binary
