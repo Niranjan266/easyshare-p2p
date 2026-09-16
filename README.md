@@ -1,5 +1,7 @@
 # EasyShare — Peer-to-Peer File Sharing System (Java)
 
+**Website A decentralized file distribution system based on BitTorrent mechanisms, written in plain Java user manual:** https://easyshare-p2p.vercel.app
+
 A decentralized file distribution system based on BitTorrent mechanisms, written in plain Java
 (JDK 17+, no external libraries).
 
