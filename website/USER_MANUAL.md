@@ -20,7 +20,7 @@ validated with a SHA-1 hash.
 6. [Quick start: demo on one computer](#6-quick-start-demo-on-one-computer)
 7. [Using EasyShare on several computers (LAN)](#7-using-easyshare-on-several-computers-lan)
 8. [Console commands](#8-console-commands)
-9. [Web dashboard](#9-web-dashboard)
+9. [Web dashboard](#9-web-dashboard) (includes sharing with a phone)
 10. [Command-line options](#10-command-line-options)
 11. [Demonstration scenarios (for the viva)](#11-demonstration-scenarios-for-the-viva)
 12. [Automated tests](#12-automated-tests)
@@ -156,6 +156,7 @@ EasyShare\
 ├── clean-demo.bat       Delete demo folders and downloads
 ├── start-tracker.bat    Start a tracker
 ├── start-peer.bat       Start a peer (asks for name, port, tracker)
+├── phone.bat            Share files with a phone browser over Wi-Fi
 ├── run-tests.bat        Run the automated end-to-end tests
 ├── USER_MANUAL.md       This manual
 ├── README.md            Short project description
@@ -403,6 +404,32 @@ The dashboard is served by the same Java program and only accepts connections fr
 
 The console and the dashboard can be used at the same time.
 
+### 9.1 Sharing files with a phone (Android or iPhone)
+
+Phones cannot run the Java peer, but a PC peer can show a **phone page** that works in any phone
+browser — no app needed.
+
+1. Connect the phone to the **same Wi-Fi** as the PC (or connect the PC to the phone's **hotspot**).
+2. On the PC double-click **`phone.bat`** (or start any peer with `--phone 9001`).
+3. Allow Java through Windows Firewall (**Private networks**) if asked.
+4. The window prints the address to open, labelled with the network adapter:
+   ```
+   Phone page    : on your phone (same Wi-Fi) open the address of your Wi-Fi adapter:
+                   http://192.168.31.56:9001/  (Realtek ... WiFi 6 Adapter)
+                   http://192.168.56.1:9001/  (VirtualBox Host-Only Ethernet Adapter)
+   ```
+   Type the **Wi-Fi** address (the first line) into the phone's browser.
+5. **PC → phone:** files in `phone-share\shared` are listed; tap **Download**.
+   Add more files to that folder and type `refresh` in the PC window.
+6. **Phone → PC:** under *Send a file from this phone*, choose a file (photo, PDF…) and tap
+   **Upload**. It is saved in the shared folder, hashed into pieces and shared with all peers.
+
+The PC window logs every transfer, e.g. `[PHONE] Received IMG_2041.jpg (2.3 MB) from 192.168.31.80`.
+
+> The phone page is visible to everyone on the same network and has no password — use it on your
+> own Wi-Fi or hotspot. The phone uses normal HTTP downloads; it is not itself a P2P peer.
+> (Android users can run a full peer with the Termux app and OpenJDK.)
+
 ---
 
 ## 10. Command-line options
@@ -422,6 +449,7 @@ java -jar EasyShare.jar selftest
 | `--downloads <folder>` | downloads | Where downloads are saved (must differ from `--shared`). |
 | `--tracker <ip:port>` | none | Tracker for peer discovery. |
 | `--web <port>` | off | Start the web dashboard on this port. |
+| `--phone <port>` | off | Start the phone page (download/upload from phone browsers on the same Wi-Fi). |
 | `--piece <KB>` | 256 | Piece size in KB (1–8192). Peers sharing the *same* file must use the same piece size to form one swarm. |
 | `--limit <KB/s>` | unlimited | Upload speed limit (to make transfers visible in demos). |
 | `--corrupt <percent>` | 0 | **Simulation:** randomly corrupt this % of uploaded pieces. |
@@ -603,6 +631,7 @@ Info hash = SHA-1 of this exact text.
 | `discover` finds no peers | Multicast may be blocked by the router/firewall or a VPN adapter; use the tracker or `connect`. |
 | Download stays at the same % | No online peer has the missing pieces. It pauses automatically after ~25 s; `resume` later. |
 | Same file appears twice in search | The two copies differ (different content or different `--piece` size) → different info hash. |
+| Phone cannot open the phone page | Same Wi-Fi? Use the IP next to the **Wi-Fi** adapter, include `:9001`, type `http://` (not https), allow Java in the firewall, avoid guest/college Wi-Fi (use a hotspot). |
 | Dashboard page does not open | Start the peer with `--web 8001`; open `http://localhost:8001/` on the **same** computer. |
 | Want to start fresh | Close all windows and run `clean-demo.bat`. |
 

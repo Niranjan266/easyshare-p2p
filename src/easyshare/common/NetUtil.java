@@ -51,6 +51,32 @@ public final class NetUtil {
         return result;
     }
 
+    /** Like {@link #lanAddresses()} but "ip  (adapter name)", Wi-Fi/Ethernet adapters first. */
+    public static List<String> lanAddressesWithAdapter() {
+        List<String> preferred = new ArrayList<>();
+        List<String> other = new ArrayList<>();
+        try {
+            for (NetworkInterface ni : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                if (!ni.isUp() || ni.isLoopback() || ni.isVirtual()) {
+                    continue;
+                }
+                String adapter = ni.getDisplayName();
+                String lower = adapter.toLowerCase();
+                boolean virtual = lower.contains("virtual") || lower.contains("vmware") || lower.contains("vpn")
+                        || lower.contains("radmin") || lower.contains("hyper-v") || lower.contains("tap") || lower.contains("tunnel");
+                for (InetAddress a : Collections.list(ni.getInetAddresses())) {
+                    if (a instanceof Inet4Address && !a.isLinkLocalAddress()) {
+                        (virtual ? other : preferred).add(a.getHostAddress() + "  (" + adapter + ")");
+                    }
+                }
+            }
+        } catch (IOException ignored) {
+            // no interfaces available
+        }
+        preferred.addAll(other);
+        return preferred;
+    }
+
     public static int freePort() throws IOException {
         try (ServerSocket s = new ServerSocket(0)) {
             return s.getLocalPort();

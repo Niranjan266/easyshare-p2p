@@ -12,6 +12,7 @@ A decentralized file distribution system based on BitTorrent mechanisms, written
 - **Swarming**: peers share pieces while still downloading; rarest-first piece selection
 - **Pause / resume** across restarts, `.p2pmeta` metadata files (like `.torrent`)
 - **Console UI** and a **web dashboard** served by the Java program itself
+- **Phone page**: phones on the same Wi-Fi download/upload files in the browser (`phone.bat`)
 
 ## Quick start (Windows)
 
@@ -38,6 +39,7 @@ dashboard is at http://localhost:8003/.
 | `clean-demo.bat` | Delete demo folders |
 | `start-tracker.bat` | Start a tracker (port 7000) |
 | `start-peer.bat` | Start a peer (asks for name, port, tracker) |
+| `phone.bat` | Share files with a phone browser on the same Wi-Fi (download + upload) |
 | `run-tests.bat` | Automated end-to-end tests |
 
 ## Command line
