@@ -155,7 +155,7 @@ public final class PeerServer {
                             out.writeInt(index);
                         } else {
                             data = maybeCorrupt(data, index, current, remoteName);
-                            sendPiece(out, index, data);
+                            sendPiece(out, current.meta().infoHash(), index, data);
                             piecesSent++;
                             bytesSent += data.length;
                         }
@@ -177,7 +177,7 @@ public final class PeerServer {
         }
     }
 
-    private void sendPiece(DataOutputStream out, int index, byte[] data) throws IOException, InterruptedException {
+    private void sendPiece(DataOutputStream out, String infoHash, int index, byte[] data) throws IOException, InterruptedException {
         out.writeByte(Protocol.RESP_PIECE);
         out.writeInt(index);
         out.writeInt(data.length);
@@ -190,7 +190,7 @@ public final class PeerServer {
                 out.flush();
             }
             offset += n;
-            node.stats().addUploaded(n);
+            node.stats().addUploaded(infoHash, n);
         }
     }
 

@@ -26,6 +26,7 @@ public final class Main {
             switch (args[0].toLowerCase()) {
                 case "tracker" -> TrackerCli.run(rest);
                 case "peer" -> PeerCli.run(PeerConfig.parse(rest));
+                case "messenger" -> easyshare.messenger.MessengerGui.launch(rest);
                 case "makefile" -> makeFile(rest);
                 case "selftest" -> System.exit(SelfTest.run() ? 0 : 1);
                 default -> usage();
@@ -45,6 +46,7 @@ public final class Main {
                 Usage:
                   java -jar EasyShare.jar tracker [--port 7000]
                   java -jar EasyShare.jar peer [options]
+                  java -jar EasyShare.jar messenger [--name <name>]              IP Messenger-style window
                   java -jar EasyShare.jar makefile <path> <size in MB>     create a sample test file
                   java -jar EasyShare.jar selftest                         run automated tests
 

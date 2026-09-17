@@ -12,6 +12,7 @@ validated with a SHA-1 hash.
 
 ## Contents
 
+0. [EasyShare Messenger (IP Messenger style)](#0-easyshare-messenger-ip-messenger-style)
 1. [Introduction](#1-introduction)
 2. [How EasyShare works](#2-how-easyshare-works)
 3. [System requirements](#3-system-requirements)
@@ -29,6 +30,76 @@ validated with a SHA-1 hash.
 15. [Troubleshooting](#15-troubleshooting)
 16. [Viva questions and answers](#16-viva-questions-and-answers)
 17. [Limitations and future work](#17-limitations-and-future-work)
+
+---
+
+## 0. EasyShare Messenger (IP Messenger style)
+
+The easiest way to use EasyShare between PCs: a window that **automatically lists every PC on the
+network** running EasyShare Messenger. Select a PC, type a message, attach files or folders and click
+**Send** — like the IP Messenger (IPMsg) app.
+
+### Start it
+
+On **every PC** (same Wi-Fi / LAN, JDK 17+ installed) double-click **`messenger.bat`**.
+The first time, Windows Firewall asks about *Java(TM) Platform SE binary* — click **Allow**
+(at least *Private networks*). Without this, other PCs cannot see you.
+
+### Window layout
+
+| Area | Use |
+|---|---|
+| **Users on the network** | Everyone online: Name, Group, Computer, IP address. Appears within seconds. Ctrl+click to select several. |
+| **Refresh** | Search the network again. |
+| **Add PC by IP...** | Add a PC that does not appear automatically (e.g. different subnet). |
+| **Message** | Type your message. **Ctrl+Enter** sends. |
+| **Attachments** | **Add files...**, **Add folder...**, or drag files/folders from Explorer onto the window. Folders are sent as a `.zip`. |
+| **Send** | Sends the message and attachments to all selected users. |
+| **Transfers** tab | Every file sent/received with a progress bar and status; **Open file**, **Open folder**, **Retry**, **Clear finished**. |
+| **Message history** tab | All messages sent and received in this session. |
+| **Settings...** | Your name, group and the folder where received files are saved. |
+| **Open received folder** | Opens the receive folder (default `Downloads\EasyShare Received`). |
+
+### Send a file
+
+1. Select the user in the list.
+2. Type a message (optional).
+3. Click **Add files...** (or drag files onto the window).
+4. Click **Send**. The status bar shows *Message delivered to …*; the Transfers tab shows
+   *Waiting for … to accept*.
+
+### Receive a file
+
+1. A window pops up (with a beep and a tray notification): **Message from …** with the text and the
+   attached files.
+2. Click **Save files** (or **Decline**). Select only some files in the list to save just those.
+3. Watch the progress in **Transfers**. When done the status says *Received (… SHA-1 verified)*,
+   and the sender sees *Delivered*.
+4. Double-click the row or click **Open file** / **Open folder**.
+5. **Reply** in the message window selects the sender so you can answer immediately.
+
+### How it works (for the viva)
+
+- **Discovery:** UDP broadcast on ports 2425–2429 (`ENTRY` when starting and every 30 s, `ANSENTRY`
+  replies, `EXIT` when closing) — the same idea and port as IP Messenger.
+- **Messages:** TCP; the receiver confirms delivery.
+- **Files:** the sender splits each file into 256 KB pieces and sends only the metadata (piece SHA-1
+  hashes) with the message. When the receiver accepts, the EasyShare P2P engine downloads the pieces
+  over TCP, checks every piece's SHA-1 and the whole-file SHA-1, and can **Retry**/resume an
+  interrupted transfer.
+
+### Test on one PC
+
+Run `messenger.bat` and then `messenger-second.bat` — a second window named *Test PC 2* appears and
+the two windows can message each other.
+
+### Problems
+
+| Problem | Fix |
+|---|---|
+| Nobody in the list | Same Wi-Fi? Click **Allow** in the firewall prompt on both PCs (or allow Java in *Windows Security → Firewall → Allow an app*). Click **Refresh**. Guest/college Wi-Fi often blocks broadcasts — use **Add PC by IP...** or a phone hotspot. |
+| "Could not reach …" | The other PC closed the messenger or its firewall blocks Java. |
+| Transfer stops | The sender closed the messenger. Ask them to open it again and click **Retry**. |
 
 ---
 
@@ -157,6 +228,8 @@ EasyShare\
 ├── start-tracker.bat    Start a tracker
 ├── start-peer.bat       Start a peer (asks for name, port, tracker)
 ├── phone.bat            Share files with a phone browser over Wi-Fi
+├── messenger.bat        IP Messenger-style window: find PCs, send messages and files
+├── messenger-second.bat Second messenger window on the same PC (for testing)
 ├── run-tests.bat        Run the automated end-to-end tests
 ├── USER_MANUAL.md       This manual
 ├── README.md            Short project description
