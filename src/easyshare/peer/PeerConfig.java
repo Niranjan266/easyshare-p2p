@@ -19,6 +19,8 @@ public final class PeerConfig {
     public boolean lanDiscovery = true;
     /** Port of the built-in web dashboard, 0 = disabled. */
     public int webPort = 0;
+    /** Port of the phone page (download/upload from a phone browser), 0 = disabled. */
+    public int phonePort = 0;
 
     public static final String OPTIONS = """
               --name <name>          Display name of this peer                  (default Peer)
@@ -27,6 +29,7 @@ public final class PeerConfig {
               --downloads <folder>   Folder where downloads are saved           (default downloads)
               --tracker <ip:port>    Tracker used for peer discovery            (optional)
               --web <port>           Open the web dashboard on this port        (optional, e.g. 8001)
+              --phone <port>         Phone page for phones on the same Wi-Fi    (optional, e.g. 9001)
               --piece <KB>           Piece (chunk) size in KB                   (default 256)
               --limit <KB/s>         Upload speed limit, to watch transfers     (default unlimited)
               --corrupt <percent>    SIMULATION: corrupt % of uploaded pieces   (default 0)
@@ -57,6 +60,7 @@ public final class PeerConfig {
                     c.trackerPort = a.port();
                 }
                 case "--web" -> c.webPort = number(option, v, 1, 65535);
+                case "--phone" -> c.phonePort = number(option, v, 1, 65535);
                 case "--piece" -> c.pieceKb = number(option, v, 1, 8192);
                 case "--limit" -> c.uploadLimitKbps = number(option, v, 0, 10_000_000);
                 case "--corrupt" -> c.corruptPercent = number(option, v, 0, 100);

@@ -6,6 +6,7 @@ import easyshare.common.NetUtil;
 import easyshare.common.PeerAddress;
 import easyshare.meta.FileMeta;
 import easyshare.tracker.TrackerClient;
+import easyshare.web.PhonePage;
 import easyshare.web.WebDashboard;
 
 import java.io.BufferedReader;
@@ -45,6 +46,18 @@ public final class PeerCli {
                 System.out.println("  Web dashboard : http://localhost:" + config.webPort + "/");
             } catch (IOException e) {
                 System.out.println("  Web dashboard could not start on port " + config.webPort + ": " + e.getMessage());
+            }
+        }
+        if (config.phonePort > 0) {
+            try {
+                new PhonePage(node, config.phonePort).start();
+                System.out.println("  Phone page    : on your phone (same Wi-Fi) open the address of your Wi-Fi adapter:");
+                for (String entry : NetUtil.lanAddressesWithAdapter()) {
+                    int space = entry.indexOf(' ');
+                    System.out.println("                  http://" + entry.substring(0, space) + ":" + config.phonePort + "/" + entry.substring(space));
+                }
+            } catch (IOException e) {
+                System.out.println("  Phone page could not start on port " + config.phonePort + ": " + e.getMessage());
             }
         }
         PeerCli cli = new PeerCli(node);
