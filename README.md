@@ -20,6 +20,9 @@ Double-click **`messenger.bat`** on every PC in the same network. Other PCs appe
 select one, type a message, attach files/folders (or drag them in) and click **Send**. The receiver
 gets a popup with **Save files / Decline / Reply**; files are transferred in SHA-1 verified pieces.
 
+A standalone copy of just the desktop app (its own source code and `.bat` files) is in
+**[`desktop-app/`](desktop-app/)** — double-click `EasyShare Messenger.bat` there.
+
 ## Quick start (Windows)
 
 ```bat
