@@ -14,6 +14,12 @@ A decentralized file distribution system based on BitTorrent mechanisms, written
 - **Console UI** and a **web dashboard** served by the Java program itself
 - **Phone page**: phones on the same Wi-Fi download/upload files in the browser (`phone.bat`)
 
+## EasyShare Messenger (IP Messenger style)
+
+Double-click **`messenger.bat`** on every PC in the same network. Other PCs appear automatically;
+select one, type a message, attach files/folders (or drag them in) and click **Send**. The receiver
+gets a popup with **Save files / Decline / Reply**; files are transferred in SHA-1 verified pieces.
+
 ## Quick start (Windows)
 
 ```bat
@@ -39,6 +45,8 @@ dashboard is at http://localhost:8003/.
 | `clean-demo.bat` | Delete demo folders |
 | `start-tracker.bat` | Start a tracker (port 7000) |
 | `start-peer.bat` | Start a peer (asks for name, port, tracker) |
+| `messenger.bat` | IP Messenger-style app: auto-discover PCs, send messages, files and folders |
+| `messenger-second.bat` | Second messenger window on the same PC for testing |
 | `phone.bat` | Share files with a phone browser on the same Wi-Fi (download + upload) |
 | `run-tests.bat` | Automated end-to-end tests |
 

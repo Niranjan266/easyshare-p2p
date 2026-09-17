@@ -3,6 +3,10 @@ package easyshare;
 import easyshare.common.HashUtil;
 import easyshare.common.Log;
 import easyshare.common.NetUtil;
+import easyshare.messenger.IncomingMessage;
+import easyshare.messenger.MessengerConfig;
+import easyshare.messenger.MessengerService;
+import easyshare.messenger.Transfer;
 import easyshare.meta.FileMeta;
 import easyshare.peer.Download;
 import easyshare.peer.PeerConfig;
@@ -17,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 /**
@@ -123,6 +128,9 @@ final class SelfTest {
                             && HashUtil.sha1File(d4.result()).equals(bigHash));
             System.out.println("      paused with " + piecesBefore + "/" + d3.meta().pieceCount() + " pieces, resumed with "
                     + d4.initialPieces());
+
+            // ---- IP Messenger-style: automatic discovery, message with file + folder, accept
+            messengerTest(root);
         } finally {
             nodes.forEach(PeerNode::stop);
             tracker.stop();
@@ -131,6 +139,82 @@ final class SelfTest {
 
         System.out.println("\nResult: " + passed + " passed, " + failed + " failed");
         return failed == 0;
+    }
+
+    private static void messengerTest(Path root) throws Exception {
+        List<IncomingMessage> inbox = new CopyOnWriteArrayList<>();
+        MessengerService a = messenger(root, "PC-A", null);
+        MessengerService b = messenger(root, "PC-B", inbox);
+        try {
+            long end = System.currentTimeMillis() + 10_000;
+            while ((a.users().isEmpty() || b.users().isEmpty()) && System.currentTimeMillis() < end) {
+                Thread.sleep(100);
+            }
+            check("Messenger: two PCs find each other automatically (UDP broadcast)", () ->
+                    a.users().stream().anyMatch(u -> u.name().equals("PC-B")) && b.users().stream().anyMatch(u -> u.name().equals("PC-A")));
+
+            Path file = root.resolve("outgoing/report.pdf");
+            writeRandom(file, 900_000, 4);
+            Path folder = root.resolve("outgoing/Photos");
+            writeRandom(folder.resolve("img1.jpg"), 200_000, 5);
+            writeRandom(folder.resolve("trip/img2.jpg"), 150_000, 6);
+            a.send(List.of(a.users().get(0)), "Hello from PC-A", List.of(file, folder));
+            end = System.currentTimeMillis() + 15_000;
+            while (inbox.isEmpty() && System.currentTimeMillis() < end) {
+                Thread.sleep(100);
+            }
+            check("Messenger: message with 2 attachments arrives", () ->
+                    inbox.size() == 1 && inbox.get(0).text.equals("Hello from PC-A") && inbox.get(0).offers.size() == 2);
+
+            IncomingMessage m = inbox.get(0);
+            b.accept(m, m.offers);
+            end = System.currentTimeMillis() + 30_000;
+            while (!(b.transfers().size() == 2 && b.transfers().stream().allMatch(Transfer::finished)) && System.currentTimeMillis() < end) {
+                Thread.sleep(100);
+            }
+            Path received = root.resolve("PC-B-received");
+            check("Messenger: accepted file is received with identical SHA-1", () ->
+                    HashUtil.sha1File(received.resolve("report.pdf")).equals(HashUtil.sha1File(file)));
+            check("Messenger: folder is received as Photos.zip containing both images", () -> {
+                try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(received.resolve("Photos.zip").toFile())) {
+                    return zip.getEntry("Photos/img1.jpg") != null && zip.getEntry("Photos/trip/img2.jpg") != null;
+                }
+            });
+            end = System.currentTimeMillis() + 5_000;
+            while (!a.transfers().stream().allMatch(t -> t.ok()) && System.currentTimeMillis() < end) {
+                Thread.sleep(100);
+            }
+            check("Messenger: sender sees both transfers as delivered", () ->
+                    a.transfers().size() == 2 && a.transfers().stream().allMatch(Transfer::ok));
+        } finally {
+            a.stop();
+            b.stop();
+        }
+    }
+
+    private static MessengerService messenger(Path root, String name, List<IncomingMessage> inbox) throws IOException {
+        MessengerConfig config = MessengerConfig.load(root.resolve(name + ".properties"));
+        config.name = name;
+        config.receiveDir = root.resolve(name + "-received");
+        MessengerService service = new MessengerService(config);
+        if (inbox != null) {
+            service.addListener(new MessengerService.Listener() {
+                public void usersChanged() {
+                }
+
+                public void messageReceived(IncomingMessage message) {
+                    inbox.add(message);
+                }
+
+                public void transfersChanged() {
+                }
+
+                public void notice(String text) {
+                }
+            });
+        }
+        service.start();
+        return service;
     }
 
     private static PeerNode start(List<PeerNode> nodes, Path root, String name, TrackerServer tracker, int limitKbps, int corrupt)
